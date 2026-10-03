@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Denzel & Angelica's Finance Tracker | Loopy & Dino Theme 🎀🦖</title>
+  
+  <!-- SEO Metadata -->
+  <meta name="description" content="A cute dinosaur and Loopy themed couple finance tracker for Denzel & Angelica. Auto-saves directly to Google Sheets for salary, debts, trip planner, and daily/weekly/monthly/one-time expenses.">
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- Hero Banner -->
+    <header class="hero-banner">
+      <div class="hero-content">
+        <div class="hero-badge-group">
+          <span class="badge-pill badge-loopy">🎀 Loopy Theme</span>
+          <span class="badge-pill badge-crong">🦖 Dino (Crong) Theme</span>
+          <span class="badge-pill" style="background:#FEF3C7; color:#B45309;">✨ Couple Finance Tracker</span>
+        </div>
+        <h1 class="hero-title">
+          <span class="title-denzel">Denzel</span> & <span class="title-angelica">Angelica</span>'s Finance Hub
+        </h1>
+        <p class="hero-subtitle">
+          Track salary, debts, trip budgets, daily/weekly/monthly/one-time expenses, skincare & essentials with automatic Google Sheet auto-saving!
+        </p>
+      </div>
+
+      <div class="hero-avatars">
+        <div class="avatar-wrapper loopy-avatar">
+          <img src="assets/loopy.png" alt="Angelica's Loopy Avatar" class="avatar-img">
+          <div class="avatar-name text-pink">Angelica 🎀</div>
+        </div>
+        
+        <div class="avatar-heart">💖</div>
+
+        <div class="avatar-wrapper crong-avatar">
+          <img src="assets/crong.png" alt="Denzel's Crong Avatar" class="avatar-img">
+          <div class="avatar-name text-green">Denzel 🦖</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Google Sheet Auto-Save Status Bar -->
+    <div class="sheet-status-bar">
+      <div class="status-info">
+        <div id="status-dot" class="status-dot"></div>
+        <span id="status-text">Google Sheets Auto-Sync: Ready</span>
+      </div>
+
+      <div class="status-actions">
+        <button id="btn-manual-sync" class="btn btn-outline btn-sm" title="Force Sync Now">
+          🔄 Sync Google Sheet
+        </button>
+        <button id="btn-open-sync-settings" class="btn btn-loopy btn-sm">
+          ⚙️ Setup Sheet Link
+        </button>
+        <a href="https://docs.google.com/spreadsheets/d/1Na-vuyyPL21sbJjvJaNFQ4KzhRDqCrQJFI_cDVmSU10/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">
+          📊 Open Google Sheet ↗
+        </a>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-tab="dashboard">🏠 Overview</button>
+      <button class="nav-tab tab-angelica" data-tab="angelica">💄 Angelica's Corner</button>
+      <button class="nav-tab tab-denzel" data-tab="denzel">🦖 Denzel's Corner</button>
+      <button class="nav-tab" data-tab="trips">✈️ Trip Planner</button>
+      <button class="nav-tab" data-tab="debts">💳 Debts & Credits</button>
+      <button class="nav-tab" data-tab="transactions">📝 Expenses & Ledger</button>
+      <button class="nav-tab" data-tab="income">💰 Salary & Income</button>
+      <button class="nav-tab" data-tab="savings">🎯 Savings & 50/30/20</button>
+      <button class="nav-tab" data-tab="analytics">📊 Charts & Insights</button>
+      <button class="nav-tab" data-tab="sync-setup">⚙️ Sheet Auto-Save Setup</button>
+    </nav>
+
+    <!-- ========================================== -->
+    <!-- TAB 1: OVERVIEW / DASHBOARD -->
+    <!-- ========================================== -->
+    <section id="tab-dashboard" class="tab-content">
+      
+      <!-- Loopy & Crong Speech Bubble -->
+      <div class="loopy-speech-bubble">
+        <img src="assets/loopy.png" alt="Loopy Speech" class="loopy-speech-avatar">
+        <div>
+          <div style="font-size:0.8rem; font-weight:700; color:var(--loopy-primary);">LOOPY & CRONG DAILY FINANCIAL TIP</div>
+          <div id="loopy-speech-quote" class="loopy-speech-text">
+            "Angelica's skincare routine is fully budgeted! Glow on! 🎀✨"
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions Header -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:1rem;">
+        <h2 class="font-heading" style="font-size:1.5rem;">Financial Overview</h2>
+        <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+          <button id="btn-add-expense" class="btn btn-loopy">+ Add Expense</button>
+          <button id="btn-add-income" class="btn btn-crong">+ Add Salary/Income</button>
+          <button id="btn-add-debt" class="btn btn-outline">+ Add Credit / Debt</button>
+        </div>
+      </div>
+
+      <!-- 4 Stat Summary Cards -->
+      <div class="dashboard-grid">
+        <div class="col-3">
+          <div class="card-stat stat-income">
+            <div class="stat-header">
+              <span class="stat-title">Total Monthly Income</span>
+              <div class="stat-icon-bg">💵</div>
+            </div>
+            <div id="stat-total-income" class="stat-value text-green">₱0.00</div>
+            <div class="stat-subtitle">Denzel & Angelica's combined salary</div>
+          </div>
+        </div>
+
+        <div class="col-3">
+          <div class="card-stat stat-expense">
+            <div class="stat-header">
+              <span class="stat-title">Total Expenses</span>
+              <div class="stat-icon-bg">🛍️</div>
+            </div>
+            <div id="stat-total-expenses" class="stat-value text-pink">₱0.00</div>
+            <div class="stat-subtitle">Daily, weekly, & monthly spend</div>
+          </div>
+        </div>
+
+        <div class="col-3">
+          <div class="card-stat stat-debt">
+            <div class="stat-header">
+              <span class="stat-title">Remaining Debts</span>
+              <div class="stat-icon-bg">💳</div>
+            </div>
+            <div id="stat-total-debt" class="stat-value text-danger">₱0.00</div>
+            <div class="stat-subtitle">Credits & loans to pay off</div>
+          </div>
+        </div>
+
+        <div class="col-3">
+          <div class="card-stat stat-net">
+            <div class="stat-header">
+              <span class="stat-title">Net Cashflow</span>
+              <div class="stat-icon-bg">🐷</div>
+            </div>
+            <div id="stat-net-savings" class="stat-value text-green">₱0.00</div>
+            <div class="stat-subtitle">Income minus expenses</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Skincare & Essentials Banner Callout -->
+      <div class="card angelica-header-card" style="margin-bottom: 1.5rem;">
+        <div class="card-body" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+          <div>
+            <span class="badge-pill badge-loopy">🎀 Angelica's Special Trackers</span>
+            <h3 class="font-heading" style="font-size:1.3rem; margin-top:0.35rem;">Skincare & Bathroom Essentials</h3>
+            <p class="text-muted" style="font-size:0.9rem;">Quick log for cleansers, serums, sunscreens, shampoos, soaps, & conditioners!</p>
+          </div>
+          <div>
+            <div style="font-size:0.85rem;" class="text-muted">Total Skincare & Care Spend:</div>
+            <div id="stat-angelica-skincare" class="font-heading text-pink" style="font-size:1.8rem; font-weight:700;">₱0.00</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overview Charts Grid -->
+      <div class="dashboard-grid">
+        <div class="col-6">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🍰 Expenses by Category</div>
+            </div>
+            <div class="card-body">
+              <canvas id="chart-categories" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">📊 Denzel vs Angelica Spend</div>
+            </div>
+            <div class="card-body">
+              <canvas id="chart-comparison" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: ANGELICA'S CORNER -->
+    <!-- ========================================== -->
+    <section id="tab-angelica" class="tab-content hidden">
+      <div class="card angelica-header-card">
+        <div class="card-body">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+            <div>
+              <span class="badge-pill badge-loopy">🎀 Angelica's Beauty & Care Haven</span>
+              <h2 class="font-heading" style="font-size:1.8rem; color: var(--loopy-primary); margin-top:0.4rem;">
+                Angelica's Skincare & Essentials Tracker
+              </h2>
+              <p class="text-muted">Dedicated tracker for cleansers, serums, sunscreens, shampoos, soaps & conditioners.</p>
+            </div>
+            <img src="assets/loopy.png" alt="Loopy" style="width:80px; height:80px; border-radius:50%; border:3px solid #FF94B9;">
+          </div>
+        </div>
+      </div>
+
+      <!-- General Quick Add Preset Chips for Angelica -->
+      <div class="card">
+        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+          <div class="card-title">⚡ Quick Add General Items (Click to Quick-Log)</div>
+          <button id="btn-angelica-custom-add" class="btn btn-loopy btn-sm" onclick="openAngelicaCustomAdd()">
+            ➕ Add Custom Item (Not in list)
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="preset-chips">
+            <button class="preset-chip" data-title="Cleanser" data-category="Angelica's Skincare" data-person="Angelica">+ Cleanser</button>
+            <button class="preset-chip" data-title="Serum" data-category="Angelica's Skincare" data-person="Angelica">+ Serum</button>
+            <button class="preset-chip" data-title="Sunscreen" data-category="Angelica's Skincare" data-person="Angelica">+ Sunscreen</button>
+            <button class="preset-chip" data-title="Moisturizer" data-category="Angelica's Skincare" data-person="Angelica">+ Moisturizer</button>
+            <button class="preset-chip" data-title="Toner" data-category="Angelica's Skincare" data-person="Angelica">+ Toner</button>
+            <button class="preset-chip" data-title="Micellar Water" data-category="Angelica's Skincare" data-person="Angelica">+ Micellar Water</button>
+            <button class="preset-chip" data-title="Conditioner" data-category="Angelica's Essentials" data-person="Angelica">+ Conditioner</button>
+            <button class="preset-chip" data-title="Shampoo" data-category="Angelica's Essentials" data-person="Angelica">+ Shampoo</button>
+            <button class="preset-chip" data-title="Soap / Beauty Bar" data-category="Angelica's Essentials" data-person="Angelica">+ Soap</button>
+            <button class="preset-chip" data-title="Body Wash" data-category="Angelica's Essentials" data-person="Angelica">+ Body Wash</button>
+            <button class="preset-chip" data-title="Face Mask" data-category="Angelica's Skincare" data-person="Angelica">+ Face Mask</button>
+            <button class="preset-chip" data-title="Cotton Pads" data-category="Angelica's Skincare" data-person="Angelica">+ Cotton Pads</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Angelica Stats Breakdown Cards -->
+      <div class="dashboard-grid">
+        <div class="col-4">
+          <div class="card-stat stat-expense">
+            <div class="stat-title">Total Care & Skincare</div>
+            <div id="angelica-total-spent" class="stat-value text-pink">₱0.00</div>
+          </div>
+        </div>
+
+        <div class="col-4">
+          <div class="card-stat">
+            <div class="stat-title">Skincare Only</div>
+            <div id="angelica-skincare-spent" class="stat-value" style="color:#D53F8C;">₱0.00</div>
+          </div>
+        </div>
+
+        <div class="col-4">
+          <div class="card-stat">
+            <div class="stat-title">Shampoos, Soaps & Essentials</div>
+            <div id="angelica-essentials-spent" class="stat-value" style="color:#B794F4;">₱0.00</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Angelica Expense Items List -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🧴 Angelica's Logged Items</div>
+        </div>
+        <div class="card-body">
+          <div id="angelica-items-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: DENZEL'S CORNER -->
+    <!-- ========================================== -->
+    <section id="tab-denzel" class="tab-content hidden">
+      <div class="card denzel-header-card">
+        <div class="card-body">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+            <div>
+              <span class="badge-pill badge-crong">🦖 Denzel's Dino Nest</span>
+              <h2 class="font-heading" style="font-size:1.8rem; color: var(--crong-primary); margin-top:0.4rem;">
+                Denzel's Essentials & Grooming
+              </h2>
+              <p class="text-muted">Track hair wax, shaving foam, deodorant, body wash & Denzel's necessities.</p>
+            </div>
+            <img src="assets/crong.png" alt="Crong" style="width:80px; height:80px; border-radius:50%; border:3px solid #81E6D9;">
+          </div>
+        </div>
+      </div>
+
+      <!-- General Preset Chips for Denzel -->
+      <div class="card">
+        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+          <div class="card-title">⚡ Quick Add General Items (Click to Quick-Log)</div>
+          <button id="btn-denzel-custom-add" class="btn btn-crong btn-sm" onclick="openDenzelCustomAdd()">
+            ➕ Add Custom Item (Not in list)
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="preset-chips">
+            <button class="preset-chip preset-chip-crong" data-title="Hair Wax" data-category="Denzel's Essentials" data-person="Denzel">+ Hair Wax</button>
+            <button class="preset-chip preset-chip-crong" data-title="Shaving Foam" data-category="Denzel's Essentials" data-person="Denzel">+ Shaving Foam</button>
+            <button class="preset-chip preset-chip-crong" data-title="Razors" data-category="Denzel's Essentials" data-person="Denzel">+ Razors</button>
+            <button class="preset-chip preset-chip-crong" data-title="Deodorant" data-category="Denzel's Essentials" data-person="Denzel">+ Deodorant</button>
+            <button class="preset-chip preset-chip-crong" data-title="Body Wash" data-category="Denzel's Essentials" data-person="Denzel">+ Body Wash</button>
+            <button class="preset-chip preset-chip-crong" data-title="Haircut / Barber" data-category="Denzel's Essentials" data-person="Denzel">+ Barber / Haircut</button>
+            <button class="preset-chip preset-chip-crong" data-title="Cologne / Perfume" data-category="Denzel's Essentials" data-person="Denzel">+ Cologne</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Denzel Stats Card -->
+      <div class="dashboard-grid">
+        <div class="col-12">
+          <div class="card-stat stat-income">
+            <div class="stat-title">Total Denzel Essentials Spend</div>
+            <div id="denzel-total-spent" class="stat-value text-green">₱0.00</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🦖 Denzel's Logged Items</div>
+        </div>
+        <div class="card-body">
+          <div id="denzel-items-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 4: TRIP & VACATION PLANNER -->
+    <!-- ========================================== -->
+    <section id="tab-trips" class="tab-content hidden">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+        <div>
+          <h2 class="font-heading" style="font-size:1.6rem;">✈️ Trip & Vacation Budget Planner</h2>
+          <p class="text-muted">Schedule couple trips, set budget breakdown for accommodation, food, transpo & souvenirs!</p>
+        </div>
+        <button class="btn btn-loopy" onclick="openModal('modal-trip')">+ Create New Trip</button>
+      </div>
+
+      <!-- Trip Cards Grid -->
+      <div id="trips-grid" class="debt-card-grid"></div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 5: DEBTS & CREDITS -->
+    <!-- ========================================== -->
+    <section id="tab-debts" class="tab-content hidden">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+        <div>
+          <h2 class="font-heading" style="font-size:1.6rem;">💳 Debts & Credit Installments to Pay</h2>
+          <p class="text-muted">Keep track of credit cards, appliances, loans, buy-now-pay-later & due dates.</p>
+        </div>
+        <button id="btn-add-debt-page" class="btn btn-loopy" onclick="openModal('modal-debt')">+ Add Credit / Debt</button>
+      </div>
+
+      <div id="debt-card-grid" class="debt-card-grid"></div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 6: EXPENSES & TRANSACTIONS LEDGER -->
+    <!-- ========================================== -->
+    <section id="tab-transactions" class="tab-content hidden">
+      <div class="card">
+        <div class="card-header" style="flex-wrap:wrap; gap:1rem;">
+          <div class="card-title">📝 All Expenses & Transactions</div>
+          
+          <!-- Filters -->
+          <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
+            <input type="text" id="search-tx" class="form-control" placeholder="🔍 Search item..." style="width:170px; padding:0.4rem 0.75rem; font-size:0.85rem;">
+            
+            <select id="filter-period" class="form-select" style="width:160px; padding:0.4rem 0.75rem; font-size:0.85rem;">
+              <option value="all">📅 All Frequencies</option>
+              <option value="Daily">☀️ Daily</option>
+              <option value="Weekly">📅 Weekly</option>
+              <option value="Monthly">🗓️ Monthly</option>
+              <option value="Every 2 Months">⏳ Every 2 Months</option>
+              <option value="Every 3 Months">🌓 Every 3 Months</option>
+              <option value="Every 6 Months">📅 Every 6 Months</option>
+              <option value="Annual">🎆 Annual / Yearly</option>
+              <option value="One-Time / Random">🎯 One-Time / Random</option>
+            </select>
+
+            <select id="filter-person" class="form-select" style="width:130px; padding:0.4rem 0.75rem; font-size:0.85rem;">
+              <option value="all">👥 Everyone</option>
+              <option value="Angelica">🎀 Angelica</option>
+              <option value="Denzel">🦖 Denzel</option>
+              <option value="Combined">💑 Combined</option>
+            </select>
+
+            <select id="filter-category" class="form-select" style="width:170px; padding:0.4rem 0.75rem; font-size:0.85rem;">
+              <option value="all">🏷️ All Categories</option>
+              <option value="Angelica's Skincare">💄 Angelica's Skincare</option>
+              <option value="Angelica's Essentials">🧴 Angelica's Essentials</option>
+              <option value="Denzel's Essentials">🦖 Denzel's Essentials</option>
+              <option value="Daily Needs & Groceries">🛒 Daily Needs & Groceries</option>
+              <option value="Dating & Outings">🍲 Dating & Outings</option>
+              <option value="Utilities & Bills">🏠 Utilities & Bills</option>
+              <option value="Transportation">🚗 Transportation</option>
+              <option value="Trip Expense">✈️ Trip Expense</option>
+              <option value="Debt Repayment">💳 Debt Repayment</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="card-body" style="padding:0;">
+          <div class="table-responsive">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Person</th>
+                  <th>Item Title & Notes</th>
+                  <th>Category</th>
+                  <th>Frequency</th>
+                  <th>Amount</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-transactions"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 7: SALARY & INCOME -->
+    <!-- ========================================== -->
+    <section id="tab-income" class="tab-content hidden">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+        <div>
+          <h2 class="font-heading" style="font-size:1.6rem;">💰 Salary & Income Streams</h2>
+          <p class="text-muted">Log Denzel & Angelica's regular salaries, bonuses, and side hustles.</p>
+        </div>
+        <button class="btn btn-crong" onclick="openModal('modal-income')">+ Add Salary / Income</button>
+      </div>
+
+      <div class="card">
+        <div class="card-body" style="padding:0;">
+          <div class="table-responsive">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Person</th>
+                  <th>Source</th>
+                  <th>Frequency</th>
+                  <th>Date Logged</th>
+                  <th>Amount</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-income"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 8: SAVINGS GOALS & 50/30/20 BUDGET RULE -->
+    <!-- ========================================== -->
+    <section id="tab-savings" class="tab-content hidden">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+        <div>
+          <h2 class="font-heading" style="font-size:1.6rem;">🎯 Couple Savings Goals & 50/30/20 Smart Allocator</h2>
+          <p class="text-muted">Build emergency funds, track wishlist goals & automate money-saving rules!</p>
+        </div>
+        <button class="btn btn-loopy" onclick="openModal('modal-savings')">+ Create Savings Goal</button>
+      </div>
+
+      <!-- 50/30/20 Smart Allocator Banner -->
+      <div class="card" style="border: 2px solid #9F7AEA; background: linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 100%); margin-bottom: 1.5rem;">
+        <div class="card-body">
+          <span class="badge-pill" style="background:#9F7AEA; color:white;">💡 Smart Budget Rule</span>
+          <h3 class="font-heading" style="font-size:1.3rem; margin-top:0.4rem;">50 / 30 / 20 Budget Guide for Denzel & Angelica</h3>
+          <p class="text-muted" style="font-size:0.9rem; margin-bottom:1rem;">Calculated based on your combined monthly salary:</p>
+
+          <div class="dashboard-grid">
+            <div class="col-4">
+              <div style="background:white; padding:1rem; border-radius:12px; border-left:4px solid #3182CE;">
+                <div style="font-size:0.8rem; font-weight:700; color:#2B6CB0;">50% NEEDS (Essentials)</div>
+                <div id="rule-needs-val" class="font-heading" style="font-size:1.4rem; font-weight:700; color:#2B6CB0;">₱0.00</div>
+                <div style="font-size:0.75rem;" class="text-muted">Groceries, Bills, Debts & Skincare basics</div>
+              </div>
+            </div>
+
+            <div class="col-4">
+              <div style="background:white; padding:1rem; border-radius:12px; border-left:4px solid #D53F8C;">
+                <div style="font-size:0.8rem; font-weight:700; color:#97266D;">30% WANTS (Lifestyle)</div>
+                <div id="rule-wants-val" class="font-heading" style="font-size:1.4rem; font-weight:700; color:#97266D;">₱0.00</div>
+                <div style="font-size:0.75rem;" class="text-muted">Dates, Outings, Special Skincare extras</div>
+              </div>
+            </div>
+
+            <div class="col-4">
+              <div style="background:white; padding:1rem; border-radius:12px; border-left:4px solid #38A169;">
+                <div style="font-size:0.8rem; font-weight:700; color:#22543D;">20% SAVINGS & INVESTMENTS</div>
+                <div id="rule-savings-val" class="font-heading" style="font-size:1.4rem; font-weight:700; color:#22543D;">₱0.00</div>
+                <div style="font-size:0.75rem;" class="text-muted">Emergency Fund & Vacation Jars</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Savings Goals Cards Grid -->
+      <div id="savings-card-grid" class="debt-card-grid"></div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 9: ANALYTICS & CHARTS -->
+    <!-- ========================================== -->
+    <section id="tab-analytics" class="tab-content hidden">
+      <h2 class="font-heading" style="font-size:1.6rem; margin-bottom:1rem;">📊 Visual Analytics & Financial Insights</h2>
+      
+      <div class="dashboard-grid">
+        <div class="col-6">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Expense Distribution</div></div>
+            <div class="card-body">
+              <canvas id="chart-analytics-cat"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Spending Split</div></div>
+            <div class="card-body">
+              <canvas id="chart-analytics-split"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 10: GOOGLE SHEET AUTO-SAVE SETUP -->
+    <!-- ========================================== -->
+    <section id="tab-sync-setup" class="tab-content hidden">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">⚡ Google Sheets 1-Click Auto-Save Integration</div>
+        </div>
+        <div class="card-body">
+          <p style="margin-bottom: 1rem;">
+            Your designated Google Sheet link is: <br>
+            <a href="https://docs.google.com/spreadsheets/d/1Na-vuyyPL21sbJjvJaNFQ4KzhRDqCrQJFI_cDVmSU10/edit?usp=sharing" target="_blank" class="text-pink font-heading" style="font-size:1.05rem;">
+              https://docs.google.com/spreadsheets/d/1Na-vuyyPL21sbJjvJaNFQ4KzhRDqCrQJFI_cDVmSU10/edit?usp=sharing ↗
+            </a>
+          </p>
+
+          <h3 class="font-heading" style="font-size:1.15rem; margin-top:1.5rem; margin-bottom:0.5rem;">How to Enable Real-Time Auto-Saving to Google Sheets:</h3>
+          <ol style="margin-left: 1.5rem; margin-bottom: 1.5rem; line-height: 1.8;">
+            <li>Open your Google Sheet linked above.</li>
+            <li>Click on <strong>Extensions ➔ Apps Script</strong> in the top menu.</li>
+            <li>Delete any default code in the editor and paste the Google Apps Script code below.</li>
+            <li>Click <strong>Deploy ➔ New Deployment</strong>.</li>
+            <li>Select type: <strong>Web App</strong>. Set "Execute as": <i>Me</i>, and "Who has access": <i>Anyone</i>.</li>
+            <li>Click <strong>Deploy</strong> and copy the generated Web App URL!</li>
+            <li>Paste that Web App URL in the setup box below and click <strong>Save & Test Sync</strong>.</li>
+          </ol>
+
+          <div style="position:relative; margin-bottom:1.5rem;">
+            <div class="code-box" id="apps-script-code">
+function doGet(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet();
+  var data = {
+    transactions: getSheetData(sheet, 'Transactions'),
+    income: getSheetData(sheet, 'Income'),
+    debts: getSheetData(sheet, 'Debts'),
+    trips: getSheetData(sheet, 'Trips'),
+    savingsGoals: getSheetData(sheet, 'SavingsGoals')
+  };
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  var payload = JSON.parse(e.postData.contents);
+  var sheet = SpreadsheetApp.getActiveSpreadsheet();
+  
+  if (payload.action === 'sync') {
+    writeSheetData(sheet, 'Transactions', payload.transactions);
+    writeSheetData(sheet, 'Income', payload.income);
+    writeSheetData(sheet, 'Debts', payload.debts);
+    writeSheetData(sheet, 'Trips', payload.trips);
+    writeSheetData(sheet, 'SavingsGoals', payload.savingsGoals);
+  }
+  return ContentService.createTextOutput(JSON.stringify({ status: 'success' }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function getSheetData(ss, name) {
+  var s = ss.getSheetByName(name);
+  if (!s) return [];
+  var rows = s.getDataRange().getValues();
+  if (rows.length < 2) return [];
+  var headers = rows[0];
+  var result = [];
+  for (var i = 1; i < rows.length; i++) {
+    var obj = {};
+    for (var j = 0; j < headers.length; j++) {
+      obj[headers[j]] = rows[i][j];
+    }
+    result.push(obj);
+  }
+  return result;
+}
+
+function writeSheetData(ss, name, dataList) {
+  if (!dataList || dataList.length === 0) return;
+  var s = ss.getSheetByName(name);
+  if (!s) s = ss.insertSheet(name);
+  s.clear();
+  var headers = Object.keys(dataList[0]);
+  s.appendRow(headers);
+  dataList.forEach(function(item) {
+    var row = [];
+    headers.forEach(function(h) { row.push(item[h] || ""); });
+    s.appendRow(row);
+  });
+}
+            </div>
+          </div>
+
+          <form id="form-sync-settings">
+            <div class="form-group">
+              <label class="form-label" for="setting-script-url">Paste Your Apps Script Web App URL Here:</label>
+              <input type="url" id="setting-script-url" class="form-control" placeholder="https://script.google.com/macros/s/.../exec">
+            </div>
+            <button type="submit" class="btn btn-loopy">💾 Save & Auto-Sync with Google Sheets</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /app-container -->
+
+  <!-- ========================================== -->
+  <!-- MODALS -->
+  <!-- ========================================== -->
+
+  <!-- MODAL 1: ADD EXPENSE / TRANSACTION -->
+  <div id="modal-transaction" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">🎀 Log Expense / Daily Need</h3>
+        <button class="btn-close">&times;</button>
+      </div>
+      <form id="form-transaction">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="tx-person">Who paid / spent?</label>
+            <select id="tx-person" class="form-select">
+              <option value="Angelica">🎀 Angelica</option>
+              <option value="Denzel">🦖 Denzel</option>
+              <option value="Combined">💑 Shared Couple Expense</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="tx-title">Item Title / Description</label>
+            <input type="text" id="tx-title" class="form-control" placeholder="e.g. Cleanser, Serum, Shampoo, Groceries" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="tx-category">Category</label>
+              <select id="tx-category" class="form-select">
+                <option value="Angelica's Skincare">💄 Angelica's Skincare</option>
+                <option value="Angelica's Essentials">🧴 Angelica's Essentials (Shampoo/Soap)</option>
+                <option value="Denzel's Essentials">🦖 Denzel's Essentials</option>
+                <option value="Daily Needs & Groceries">🛒 Daily Needs & Groceries</option>
+                <option value="Dating & Outings">🍲 Dating & Outings</option>
+                <option value="Utilities & Bills">🏠 Utilities & Bills</option>
+                <option value="Transportation">🚗 Transportation</option>
+                <option value="Trip Expense">✈️ Trip Expense</option>
+                <option value="Miscellaneous">🛍️ Miscellaneous</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="tx-amount">Amount (₱)</label>
+              <input type="number" step="0.01" id="tx-amount" class="form-control" placeholder="0.00" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="tx-period">Frequency / Scope</label>
+              <select id="tx-period" class="form-select">
+                <option value="Daily">☀️ Daily Expense</option>
+                <option value="Weekly">📅 Weekly Expense</option>
+                <option value="Monthly" selected>🗓️ Monthly Expense</option>
+                <option value="Every 2 Months">⏳ Every 2 Months (Bi-Monthly)</option>
+                <option value="Every 3 Months">🌓 Every 3 Months (Quarterly)</option>
+                <option value="Every 6 Months">📅 Every 6 Months (Semi-Annual)</option>
+                <option value="Annual">🎆 Annual / Yearly</option>
+                <option value="One-Time / Random">🎯 One-Time / Random Expense (Just this time)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="tx-date">Date</label>
+              <input type="date" id="tx-date" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="tx-notes">Notes / Brand Details (Optional)</label>
+            <input type="text" id="tx-notes" class="form-control" placeholder="e.g. Bought from store / Restock">
+          </div>
+        </div>
+
+        <div style="padding:1rem 1.5rem; background:#F7FAFC; display:flex; justify-content:flex-end; gap:0.75rem; border-top:1px solid var(--border-light);">
+          <button type="button" class="btn btn-outline btn-modal-cancel">Cancel</button>
+          <button type="submit" class="btn btn-loopy">Save Expense</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: ADD SALARY / INCOME -->
+  <div id="modal-income" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header header-crong">
+        <h3 class="modal-title">🦖 Add Salary / Income</h3>
+        <button class="btn-close">&times;</button>
+      </div>
+      <form id="form-income">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="inc-person">Earned By</label>
+            <select id="inc-person" class="form-select">
+              <option value="Denzel">🦖 Denzel</option>
+              <option value="Angelica">🎀 Angelica</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inc-source">Income Source</label>
+            <input type="text" id="inc-source" class="form-control" placeholder="e.g. Monthly Salary, Freelance project" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="inc-amount">Amount (₱)</label>
+              <input type="number" step="0.01" id="inc-amount" class="form-control" placeholder="0.00" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="inc-frequency">Frequency</label>
+              <select id="inc-frequency" class="form-select">
+                <option value="Monthly">Monthly</option>
+                <option value="Semi-Monthly">Semi-Monthly (15th/30th)</option>
+                <option value="One-time">One-time Bonus</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inc-date">Date Received</label>
+            <input type="date" id="inc-date" class="form-control">
+          </div>
+        </div>
+
+        <div style="padding:1rem 1.5rem; background:#F7FAFC; display:flex; justify-content:flex-end; gap:0.75rem; border-top:1px solid var(--border-light);">
+          <button type="button" class="btn btn-outline btn-modal-cancel">Cancel</button>
+          <button type="submit" class="btn btn-crong">Save Income</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 3: ADD CREDIT / DEBT -->
+  <div id="modal-debt" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">💳 Add Credit / Debt Payable</h3>
+        <button class="btn-close">&times;</button>
+      </div>
+      <form id="form-debt">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="debt-person">Account Owner</label>
+            <select id="debt-person" class="form-select">
+              <option value="Combined">💑 Shared / Couple Debt</option>
+              <option value="Denzel">🦖 Denzel</option>
+              <option value="Angelica">🎀 Angelica</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="debt-title">Title / Item Financed</label>
+            <input type="text" id="debt-title" class="form-control" placeholder="e.g. Appliance Credit Card Installment, Gadget Loan" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="debt-creditor">Creditor / Provider</label>
+            <input type="text" id="debt-creditor" class="form-control" placeholder="e.g. BPI, Home Credit, SpayLater" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="debt-total">Total Original Amount (₱)</label>
+              <input type="number" step="0.01" id="debt-total" class="form-control" placeholder="0.00" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="debt-remaining">Remaining Balance (₱)</label>
+              <input type="number" step="0.01" id="debt-remaining" class="form-control" placeholder="0.00">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="debt-min-pay">Minimum Monthly Payment (₱)</label>
+              <input type="number" step="0.01" id="debt-min-pay" class="form-control" placeholder="0.00">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="debt-due-date">Due Date</label>
+              <input type="date" id="debt-due-date" class="form-control">
+            </div>
+          </div>
+        </div>
+
+        <div style="padding:1rem 1.5rem; background:#F7FAFC; display:flex; justify-content:flex-end; gap:0.75rem; border-top:1px solid var(--border-light);">
+          <button type="button" class="btn btn-outline btn-modal-cancel">Cancel</button>
+          <button type="submit" class="btn btn-loopy">Save Debt Item</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 4: CREATE NEW TRIP -->
+  <div id="modal-trip" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">✈️ Create Vacation / Trip Budget</h3>
+        <button class="btn-close">&times;</button>
+      </div>
+      <form id="form-trip">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="trip-destination">Trip Title / Destination</label>
+            <input type="text" id="trip-destination" class="form-control" placeholder="e.g. Boracay Getaway, Japan Travel 2027" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="trip-start-date">Start Date</label>
+              <input type="date" id="trip-start-date" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="trip-end-date">End Date</label>
+              <input type="date" id="trip-end-date" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="trip-total-budget">Total Planned Trip Budget (₱)</label>
+            <input type="number" step="0.01" id="trip-total-budget" class="form-control" placeholder="e.g. 35000" required>
+          </div>
+
+          <h4 class="font-heading" style="font-size:1rem; margin-top:1rem; margin-bottom:0.5rem;">Estimated Sub-Category Budgets:</h4>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="trip-b-stay">🏨 Stay / Hotel (₱)</label>
+              <input type="number" step="0.01" id="trip-b-stay" class="form-control" placeholder="0.00">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="trip-b-food">🍲 Food & Dining (₱)</label>
+              <input type="number" step="0.01" id="trip-b-food" class="form-control" placeholder="0.00">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="trip-b-transpo">🚗 Transpo / Flights (₱)</label>
+              <input type="number" step="0.01" id="trip-b-transpo" class="form-control" placeholder="0.00">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="trip-b-activities">🎟️ Activities & Shopping (₱)</label>
+              <input type="number" step="0.01" id="trip-b-activities" class="form-control" placeholder="0.00">
+            </div>
+          </div>
+        </div>
+
+        <div style="padding:1rem 1.5rem; background:#F7FAFC; display:flex; justify-content:flex-end; gap:0.75rem; border-top:1px solid var(--border-light);">
+          <button type="button" class="btn btn-outline btn-modal-cancel">Cancel</button>
+          <button type="submit" class="btn btn-loopy">Save Trip</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 5: CREATE SAVINGS GOAL -->
+  <div id="modal-savings" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">🎯 Create Savings Target Goal</h3>
+        <button class="btn-close">&times;</button>
+      </div>
+      <form id="form-savings">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="sav-title">Goal Name</label>
+            <input type="text" id="sav-title" class="form-control" placeholder="e.g. Emergency Fund, New Laptop, Wedding Fund" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="sav-target">Target Amount (₱)</label>
+              <input type="number" step="0.01" id="sav-target" class="form-control" placeholder="e.g. 50000" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="sav-current">Current Saved Balance (₱)</label>
+              <input type="number" step="0.01" id="sav-current" class="form-control" placeholder="0.00">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="sav-target-date">Target Date (Optional)</label>
+            <input type="date" id="sav-target-date" class="form-control">
+          </div>
+        </div>
+
+        <div style="padding:1rem 1.5rem; background:#F7FAFC; display:flex; justify-content:flex-end; gap:0.75rem; border-top:1px solid var(--border-light);">
+          <button type="button" class="btn btn-outline btn-modal-cancel">Cancel</button>
+          <button type="submit" class="btn btn-loopy">Save Goal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 6: SYNC SETTINGS MODAL -->
+  <div id="modal-sync" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">⚙️ Google Sheets Integration Settings</h3>
+        <button class="btn-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted" style="margin-bottom:1rem;">
+          Connect your Google Sheet automatically for real-time background saving across all devices!
+        </p>
+        <p style="font-size:0.85rem; background:#FFF5F7; padding:0.75rem; border-radius:8px; border:1px solid #FFD6E0;" class="text-pink">
+          Target Google Sheet: <a href="https://docs.google.com/spreadsheets/d/1Na-vuyyPL21sbJjvJaNFQ4KzhRDqCrQJFI_cDVmSU10/edit?usp=sharing" target="_blank" style="text-decoration:underline;">Click to open sheet ↗</a>
+        </p>
+      </div>
+      <div style="padding:1rem 1.5rem; background:#F7FAFC; display:flex; justify-content:flex-end; gap:0.75rem; border-top:1px solid var(--border-light);">
+        <button type="button" class="btn btn-outline btn-modal-cancel">Close</button>
+        <button type="button" class="btn btn-loopy" onclick="closeModal('modal-sync'); document.querySelector('[data-tab=sync-setup]').click();">
+          Open Setup Instructions ➔
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Logic -->
+  <script src="script.js"></script>
+</body>
+</html>
