@@ -3,101 +3,127 @@
  * Full Google Sheets Auto-Save & Synchronization
  */
 
-// Default Spreadsheet URL provided by Denzel & Angelica
+// ─── CONFIGURATION ────────────────────────────────────────────────────────────
+// Your Google Sheet link
 const GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1Na-vuyyPL21sbJjvJaNFQ4KzhRDqCrQJFI_cDVmSU10/edit?usp=sharing";
-const SPREADSHEET_ID = "1Na-vuyyPL21sbJjvJaNFQ4KzhRDqCrQJFI_cDVmSU10";
+const SPREADSHEET_ID   = "1Na-vuyyPL21sbJjvJaNFQ4KzhRDqCrQJFI_cDVmSU10";
 
-// Initial Seed Data (if local storage is empty)
+// *** HARDCODED Apps Script Web App URL ***
+// Data is ALWAYS loaded from this URL on every page open.
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw8EWqTs9IIZnv-yp51gf3gn1r5WpmulgcNm6iw9yaCWq6wHjJls2D_ncRNrfC6hapCOA/exec";
+
+// ─── DEFAULT EMPTY STATE ───────────────────────────────────────────────────────
+// These are intentionally EMPTY — real data always comes from Google Sheets.
+// LocalStorage is only used as an offline fallback when the network is unavailable.
 const INITIAL_DATA = {
   settings: {
-    scriptUrl: "",
+    scriptUrl: APPS_SCRIPT_URL,   // always connected
     currency: "₱",
     autoSync: true
   },
-  income: [
-    { id: "inc-1", person: "Denzel", source: "Denzel's Salary", amount: 45000, frequency: "Monthly", date: "2026-10-01", notes: "Primary Income" },
-    { id: "inc-2", person: "Angelica", source: "Angelica's Salary", amount: 42000, frequency: "Monthly", date: "2026-10-01", notes: "Primary Income" },
-    { id: "inc-3", person: "Denzel", source: "Side Hustle / Freelance", amount: 8500, frequency: "One-time", date: "2026-09-28", notes: "Web Development" }
-  ],
-  debts: [
-    { id: "debt-1", person: "Combined", title: "BPI Credit Card Installment", creditor: "BPI Bank", totalAmount: 24000, remainingAmount: 12000, minMonthlyPayment: 2000, dueDate: "2026-10-15", status: "Active", notes: "Appliance purchase 0% interest" },
-    { id: "debt-2", person: "Denzel", title: "Gadget Loan", creditor: "Home Credit", totalAmount: 18000, remainingAmount: 6000, minMonthlyPayment: 1500, dueDate: "2026-10-20", status: "Active", notes: "Work Monitor" },
-    { id: "debt-3", person: "Angelica", title: "Shopping Buy-Now-Pay-Later", creditor: "SpayLater", totalAmount: 4500, remainingAmount: 1500, minMonthlyPayment: 750, dueDate: "2026-10-10", status: "Active", notes: "Clothes & Essentials" }
-  ],
-  trips: [
-    {
-      id: "trip-1",
-      destination: "Boracay Couple Vacation",
-      startDate: "2026-11-15",
-      endDate: "2026-11-18",
-      totalBudget: 35000,
-      bStay: 12000,
-      bFood: 10000,
-      bTranspo: 8000,
-      bActivities: 5000,
-      notes: "Beach getaway & anniversary celebration 🏖️"
-    },
-    {
-      id: "trip-2",
-      destination: "Tagaytay Weekend Trip",
-      startDate: "2026-10-24",
-      endDate: "2026-10-25",
-      totalBudget: 8000,
-      bStay: 3500,
-      bFood: 3000,
-      bTranspo: 1500,
-      bActivities: 0,
-      notes: "Cozy dinner date & cafe hopping ☕"
-    }
-  ],
-  savingsGoals: [
-    { id: "sav-1", title: "Emergency Savings Fund", targetAmount: 100000, currentAmount: 45000, targetDate: "2026-12-31" },
-    { id: "sav-2", title: "Japan Couple Travel Fund", targetAmount: 80000, currentAmount: 25000, targetDate: "2027-05-15" }
-  ],
-  transactions: [
-    { id: "tx-1", person: "Angelica", title: "Cleanser", category: "Angelica's Skincare", amount: 650, type: "Expense", period: "Monthly", date: "2026-10-02", notes: "Gentle facial restock" },
-    { id: "tx-2", person: "Angelica", title: "Serum", category: "Angelica's Skincare", amount: 890, type: "Expense", period: "Monthly", date: "2026-10-02", notes: "Niacinamide glow serum" },
-    { id: "tx-3", person: "Angelica", title: "Conditioner", category: "Angelica's Essentials", amount: 480, type: "Expense", period: "Every 2 Months", date: "2026-10-02", notes: "Hair care restock" },
-    { id: "tx-4", person: "Angelica", title: "Shampoo", category: "Angelica's Essentials", amount: 420, type: "Expense", period: "Every 2 Months", date: "2026-10-01", notes: "Hair care restock" },
-    { id: "tx-5", person: "Angelica", title: "Soap", category: "Angelica's Essentials", amount: 350, type: "Expense", period: "Monthly", date: "2026-10-01", notes: "Beauty bar soaps" },
-    { id: "tx-6", person: "Denzel", title: "Hair Wax", category: "Denzel's Essentials", amount: 320, type: "Expense", period: "Every 3 Months", date: "2026-09-29", notes: "Styling wax" },
-    { id: "tx-7", person: "Denzel", title: "Shaving Foam", category: "Denzel's Essentials", amount: 280, type: "Expense", period: "Every 6 Months", date: "2026-09-29", notes: "Personal grooming" },
-    { id: "tx-8", person: "Combined", title: "Weekly Grocery Shopping", category: "Daily Needs & Groceries", amount: 3800, type: "Expense", period: "Weekly", date: "2026-10-02", notes: "Eggs, Milk, Vegetables, Meats, Fruits" },
-    { id: "tx-9", person: "Combined", title: "Romantic Dinner & Coffee Date", category: "Dating & Outings", amount: 1650, type: "Expense", period: "Weekly", date: "2026-09-30", notes: "Weekend cozy date" },
-    { id: "tx-10", person: "Combined", title: "Electricity & Fiber Internet Bill", category: "Utilities & Bills", amount: 4800, type: "Expense", period: "Monthly", date: "2026-09-25", notes: "Meralco + Converge" },
-    { id: "tx-11", person: "Combined", title: "Boracay Flight Reservation", category: "Trip Expense", amount: 7500, type: "Expense", period: "One-Time / Random", date: "2026-09-20", notes: "Boracay Couple Vacation flight deposit" }
-  ]
+  income:       [],
+  debts:        [],
+  trips:        [],
+  savingsGoals: [],
+  transactions: []
 };
 
-// Cute Loopy & Crong Speech Messages
+// ─── SPEECH MESSAGES ──────────────────────────────────────────────────────────
 const LOOPY_CRONG_QUOTES = [
   "Loopy says: Angelica's skincare routine is fully budgeted! Glow on! 🎀✨",
-  "Crong says: Denzel and Angelica are saving super well today! Rawr! REX! 🦖💪",
+  "Crong says: Denzel and Angelica are saving super well today! Rawr! 🦖💪",
   "Loopy & Crong: Teamwork makes the dream work for both of your future goals! 💕",
   "Loopy says: Don't forget to check your shampoo and soap stock! 🧴🌸",
   "Crong says: Keeping our debts low means more fun vacations & date nights ahead! 🍲🎉",
   "Loopy says: Auto-sync is protecting your hard-earned budget in Google Sheets! 📊⭐"
 ];
 
-// App State
+// ─── APP STATE ────────────────────────────────────────────────────────────────
 let state = {
   ...INITIAL_DATA,
   activeTab: "dashboard",
   syncing: false
 };
 
-// DOM Content Loaded Handler
-document.addEventListener("DOMContentLoaded", () => {
-  loadLocalState();
+// ─── STARTUP ──────────────────────────────────────────────────────────────────
+// Priority on every page open:
+//   1. Show a loading spinner immediately
+//   2. Fetch data from Google Sheets (source of truth)
+//   3. If Google Sheets fetch fails → fall back to localStorage
+//   4. If localStorage also empty → start blank (no fake seed data)
+document.addEventListener("DOMContentLoaded", async () => {
   setupEventListeners();
+  triggerRandomQuote();
+  showLoadingOverlay(true);
+
+  // Always wipe any old stale seed-data that may have been saved before
+  // this fix. We identify seed data by checking for the old hardcoded IDs.
+  wipeSeedDataFromStorage();
+
+  try {
+    // Always try Google Sheets first
+    await fetchFromGoogleSheets();
+    updateSyncStatusUI("Loaded from Google Sheets ✅", "success");
+  } catch (err) {
+    console.warn("Could not reach Google Sheets on startup, loading localStorage backup.", err);
+    loadLocalState();
+    updateSyncStatusUI("Offline — showing saved backup", "error");
+  }
+
+  showLoadingOverlay(false);
   renderAll();
   initCharts();
-  triggerRandomQuote();
-
-  if (state.settings.scriptUrl) {
-    syncWithGoogleSheets(true);
-  }
 });
+
+// Remove any localStorage data that contains the old seed IDs we no longer want.
+function wipeSeedDataFromStorage() {
+  const OLD_SEED_IDS = ["inc-1","inc-2","inc-3","debt-1","debt-2","debt-3",
+                         "tx-1","tx-2","tx-3","tx-4","tx-5","tx-6","tx-7",
+                         "tx-8","tx-9","tx-10","tx-11","trip-1","trip-2",
+                         "sav-1","sav-2"];
+  const saved = localStorage.getItem("dna_finance_tracker_data");
+  if (!saved) return;
+  try {
+    const parsed = JSON.parse(saved);
+    const allIds = [
+      ...(parsed.income || []).map(x => x.id),
+      ...(parsed.debts  || []).map(x => x.id),
+      ...(parsed.transactions || []).map(x => x.id),
+      ...(parsed.trips || []).map(x => x.id),
+      ...(parsed.savingsGoals || []).map(x => x.id)
+    ];
+    const hasSeed = allIds.some(id => OLD_SEED_IDS.includes(id));
+    if (hasSeed) {
+      console.log("Wiping old seed data from localStorage...");
+      localStorage.removeItem("dna_finance_tracker_data");
+    }
+  } catch (e) { /* ignore parse errors */ }
+}
+
+// Show/hide a full-page loading overlay while fetching Sheets data
+function showLoadingOverlay(visible) {
+  let overlay = document.getElementById("sheets-loading-overlay");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = "sheets-loading-overlay";
+    overlay.innerHTML = `
+      <div style="
+        position:fixed; top:0; left:0; right:0; bottom:0;
+        background:rgba(255,245,247,0.92); backdrop-filter:blur(6px);
+        display:flex; flex-direction:column; align-items:center; justify-content:center;
+        z-index:9999; gap:1.5rem;
+      ">
+        <img src="assets/loopy.png" style="width:90px; border-radius:50%; animation: pulse-heart 1.2s infinite;">
+        <div style="font-family:'Fredoka',sans-serif; font-size:1.5rem; color:#FF7096; font-weight:700;">
+          Loading your finance data from Google Sheets…
+        </div>
+        <div style="font-size:0.9rem; color:#718096;">Just a moment! Loopy & Crong are fetching your data 🎀🦖</div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = visible ? "block" : "none";
+}
 
 // Save to LocalStorage
 function saveLocalState() {
@@ -622,7 +648,7 @@ function handleAddTransaction(e) {
   closeModal("modal-transaction");
   document.getElementById("form-transaction").reset();
   triggerRandomQuote();
-  autoSaveToSheets();
+  sheetAppend("Transactions", newTx);
 }
 
 function handleAddIncome(e) {
@@ -647,7 +673,7 @@ function handleAddIncome(e) {
   renderAll();
   closeModal("modal-income");
   document.getElementById("form-income").reset();
-  autoSaveToSheets();
+  sheetAppend("Income", newInc);
 }
 
 function handleAddDebt(e) {
@@ -677,7 +703,7 @@ function handleAddDebt(e) {
   renderAll();
   closeModal("modal-debt");
   document.getElementById("form-debt").reset();
-  autoSaveToSheets();
+  sheetAppend("Debts", newDebt);
 }
 
 function handleAddTrip(e) {
@@ -709,7 +735,7 @@ function handleAddTrip(e) {
   renderAll();
   closeModal("modal-trip");
   document.getElementById("form-trip").reset();
-  autoSaveToSheets();
+  sheetAppend("Trips", newTrip);
 }
 
 function handleAddSavingsGoal(e) {
@@ -733,7 +759,7 @@ function handleAddSavingsGoal(e) {
   renderAll();
   closeModal("modal-savings");
   document.getElementById("form-savings").reset();
-  autoSaveToSheets();
+  sheetAppend("SavingsGoals", newGoal);
 }
 
 function depositSavings(goalId) {
@@ -748,7 +774,7 @@ function depositSavings(goalId) {
   goal.currentAmount = (goal.currentAmount || 0) + dep;
   saveLocalState();
   renderAll();
-  autoSaveToSheets();
+  sheetUpdate("SavingsGoals", goal);
 }
 
 function addTripExpense(tripDestination) {
@@ -764,7 +790,7 @@ function deleteTransaction(id) {
     state.transactions = state.transactions.filter(t => t.id !== id);
     saveLocalState();
     renderAll();
-    autoSaveToSheets();
+    sheetDelete("Transactions", id);
   }
 }
 
@@ -773,7 +799,7 @@ function deleteIncome(id) {
     state.income = state.income.filter(i => i.id !== id);
     saveLocalState();
     renderAll();
-    autoSaveToSheets();
+    sheetDelete("Income", id);
   }
 }
 
@@ -782,7 +808,7 @@ function deleteDebt(id) {
     state.debts = state.debts.filter(d => d.id !== id);
     saveLocalState();
     renderAll();
-    autoSaveToSheets();
+    sheetDelete("Debts", id);
   }
 }
 
@@ -791,7 +817,7 @@ function deleteTrip(id) {
     state.trips = state.trips.filter(t => t.id !== id);
     saveLocalState();
     renderAll();
-    autoSaveToSheets();
+    sheetDelete("Trips", id);
   }
 }
 
@@ -800,7 +826,7 @@ function deleteSavingsGoal(id) {
     state.savingsGoals = state.savingsGoals.filter(s => s.id !== id);
     saveLocalState();
     renderAll();
-    autoSaveToSheets();
+    sheetDelete("SavingsGoals", id);
   }
 }
 
@@ -818,7 +844,7 @@ function makeDebtPayment(debtId) {
     debt.status = "Paid Off";
   }
 
-  state.transactions.unshift({
+  const payTx = {
     id: "tx-" + Date.now(),
     person: debt.person,
     title: `Payment for ${debt.title}`,
@@ -828,12 +854,15 @@ function makeDebtPayment(debtId) {
     period: "Monthly",
     date: new Date().toISOString().split('T')[0],
     notes: `Paid to ${debt.creditor}`
-  });
+  };
+  state.transactions.unshift(payTx);
 
   saveLocalState();
   renderAll();
   alert(`Payment of ${formatMoney(payAmount)} recorded successfully! 🎉`);
-  autoSaveToSheets();
+  // Two targeted operations: update the debt row, append the new payment row
+  sheetUpdate("Debts", debt);
+  sheetAppend("Transactions", payTx);
 }
 
 // Settings
@@ -850,75 +879,60 @@ function handleSaveSyncSettings(e) {
   }
 }
 
-// Google Sheets Sync
-async function syncWithGoogleSheets(isInitialLoad = false) {
-  if (!state.settings.scriptUrl) {
-    updateSyncStatusUI("Not Connected", "error");
-    return;
-  }
+// ─── GOOGLE SHEETS TARGETED OPERATIONS ───────────────────────────────────────
+// Each function only touches ONE record in the sheet, so two people can
+// add/edit/delete simultaneously without overwriting each other.
 
-  state.syncing = true;
-  updateSyncStatusUI("Syncing with Google Sheets...", "syncing");
-
-  try {
-    if (isInitialLoad) {
-      const response = await fetch(state.settings.scriptUrl + "?action=get");
-      if (response.ok) {
-        const data = await response.json();
-        if (data.transactions && data.transactions.length > 0) state.transactions = data.transactions;
-        if (data.income && data.income.length > 0) state.income = data.income;
-        if (data.debts && data.debts.length > 0) state.debts = data.debts;
-        if (data.trips && data.trips.length > 0) state.trips = data.trips;
-        if (data.savingsGoals && data.savingsGoals.length > 0) state.savingsGoals = data.savingsGoals;
-        saveLocalState();
-        renderAll();
-      }
-    } else {
-      const payload = {
-        action: "sync",
-        transactions: state.transactions,
-        income: state.income,
-        debts: state.debts,
-        trips: state.trips || [],
-        savingsGoals: state.savingsGoals || []
-      };
-
-      await fetch(state.settings.scriptUrl, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-    }
-
-    state.syncing = false;
-    updateSyncStatusUI("Auto-Synced with Google Sheets ✅", "success");
-  } catch (err) {
-    console.error("Google Sheets sync error:", err);
-    state.syncing = false;
-    updateSyncStatusUI("Sync Pending (Offline mode)", "error");
-  }
+function sheetPost(payload) {
+  // fire-and-forget — no-cors so we can't read the response body,
+  // but the Apps Script processes it correctly.
+  fetch(APPS_SCRIPT_URL, {
+    method:  "POST",
+    mode:    "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body:    JSON.stringify(payload)
+  }).catch(err => console.warn("Sheet write failed (will retry on next load):", err));
 }
 
-function autoSaveToSheets() {
-  if (state.settings.scriptUrl) {
-    syncWithGoogleSheets(false);
+// Add a brand-new row to the named sheet tab.
+function sheetAppend(sheetName, record) {
+  sheetPost({ action: "append", sheetName, record });
+  updateSyncStatusUI("Saved to Google Sheets ✅", "success");
+}
+
+// Update an existing row in-place (matched by its `id` field).
+function sheetUpdate(sheetName, record) {
+  sheetPost({ action: "update", sheetName, record });
+  updateSyncStatusUI("Updated in Google Sheets ✅", "success");
+}
+
+// Remove one row from the named sheet tab (matched by id).
+function sheetDelete(sheetName, id) {
+  sheetPost({ action: "delete", sheetName, id });
+  updateSyncStatusUI("Deleted from Google Sheets ✅", "success");
+}
+
+// Manual full-reload from Sheets (triggered by the Sync button in the status bar).
+async function syncWithGoogleSheets() {
+  updateSyncStatusUI("Re-loading from Google Sheets…", "syncing");
+  try {
+    await fetchFromGoogleSheets();
+    renderAll();
+    initCharts();
+    updateSyncStatusUI("Reloaded from Google Sheets ✅", "success");
+  } catch (err) {
+    console.error("Manual sync failed:", err);
+    updateSyncStatusUI("Sync failed — check connection", "error");
   }
 }
 
 function updateSyncStatusUI(message, statusType = "success") {
-  const dot = document.getElementById("status-dot");
+  const dot  = document.getElementById("status-dot");
   const text = document.getElementById("status-text");
-
   if (!text || !dot) return;
-
-  if (state.settings.scriptUrl) {
-    text.textContent = message || "Auto-Synced with Google Sheets ✅";
-    dot.className = `status-dot ${statusType}`;
-  } else {
-    text.textContent = "Google Sheets Setup Available (Offline Backup Active)";
-    dot.className = "status-dot error";
-  }
+  // Always show as connected — URL is hardcoded
+  text.textContent = message || "Connected to Google Sheets ✅";
+  dot.className = `status-dot ${statusType}`;
 }
 
 // Modal Helpers

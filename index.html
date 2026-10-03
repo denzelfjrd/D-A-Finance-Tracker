@@ -574,65 +574,94 @@
             <li>Paste that Web App URL in the setup box below and click <strong>Save & Test Sync</strong>.</li>
           </ol>
 
-          <div style="position:relative; margin-bottom:1.5rem;">
             <div class="code-box" id="apps-script-code">
+// ── READ ────────────────────────────────────────────────────────────────
 function doGet(e) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
   var data = {
-    transactions: getSheetData(sheet, 'Transactions'),
-    income: getSheetData(sheet, 'Income'),
-    debts: getSheetData(sheet, 'Debts'),
-    trips: getSheetData(sheet, 'Trips'),
-    savingsGoals: getSheetData(sheet, 'SavingsGoals')
+    transactions: getSheetData(ss, 'Transactions'),
+    income:       getSheetData(ss, 'Income'),
+    debts:        getSheetData(ss, 'Debts'),
+    trips:        getSheetData(ss, 'Trips'),
+    savingsGoals: getSheetData(ss, 'SavingsGoals')
   };
   return ContentService.createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+// ── WRITE (append / update / delete one record at a time) ───────────────
 function doPost(e) {
   var payload = JSON.parse(e.postData.contents);
-  var sheet = SpreadsheetApp.getActiveSpreadsheet();
-  
-  if (payload.action === 'sync') {
-    writeSheetData(sheet, 'Transactions', payload.transactions);
-    writeSheetData(sheet, 'Income', payload.income);
-    writeSheetData(sheet, 'Debts', payload.debts);
-    writeSheetData(sheet, 'Trips', payload.trips);
-    writeSheetData(sheet, 'SavingsGoals', payload.savingsGoals);
-  }
-  return ContentService.createTextOutput(JSON.stringify({ status: 'success' }))
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  if      (payload.action === 'append') appendRecord(ss, payload.sheetName, payload.record);
+  else if (payload.action === 'update') updateRecord(ss, payload.sheetName, payload.record);
+  else if (payload.action === 'delete') deleteRecord(ss, payload.sheetName, payload.id);
+  return ContentService.createTextOutput(JSON.stringify({ status: 'ok' }))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+// ── HELPERS ─────────────────────────────────────────────────────────────
 function getSheetData(ss, name) {
   var s = ss.getSheetByName(name);
-  if (!s) return [];
+  if (!s || s.getLastRow() < 2) return [];
   var rows = s.getDataRange().getValues();
-  if (rows.length < 2) return [];
   var headers = rows[0];
-  var result = [];
-  for (var i = 1; i < rows.length; i++) {
+  return rows.slice(1).map(function(row) {
     var obj = {};
-    for (var j = 0; j < headers.length; j++) {
-      obj[headers[j]] = rows[i][j];
-    }
-    result.push(obj);
-  }
-  return result;
+    headers.forEach(function(h, i) { obj[h] = row[i]; });
+    return obj;
+  });
 }
 
-function writeSheetData(ss, name, dataList) {
-  if (!dataList || dataList.length === 0) return;
+function ensureSheet(ss, name) {
+  return ss.getSheetByName(name) || ss.insertSheet(name);
+}
+
+function getHeaders(s) {
+  if (s.getLastRow() === 0) return [];
+  return s.getRange(1, 1, 1, s.getLastColumn()).getValues()[0];
+}
+
+// Appends a new row. Creates the sheet and header row if needed.
+function appendRecord(ss, name, record) {
+  var s = ensureSheet(ss, name);
+  var headers = getHeaders(s);
+  if (headers.length === 0) {
+    headers = Object.keys(record);
+    s.appendRow(headers);
+  }
+  s.appendRow(headers.map(function(h) { return record[h] !== undefined ? record[h] : ''; }));
+}
+
+// Updates an existing row matched by its 'id' field.
+// Falls back to append if the id is not found.
+function updateRecord(ss, name, record) {
+  var s = ensureSheet(ss, name);
+  var data = s.getDataRange().getValues();
+  if (data.length < 2) { appendRecord(ss, name, record); return; }
+  var headers = data[0];
+  var idCol = headers.indexOf('id');
+  if (idCol === -1) { appendRecord(ss, name, record); return; }
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idCol]) === String(record.id)) {
+      s.getRange(i + 1, 1, 1, headers.length)
+       .setValues([headers.map(function(h) { return record[h] !== undefined ? record[h] : ''; })]);
+      return;
+    }
+  }
+  appendRecord(ss, name, record); // id not found — treat as new
+}
+
+// Deletes the row whose 'id' column matches.
+function deleteRecord(ss, name, id) {
   var s = ss.getSheetByName(name);
-  if (!s) s = ss.insertSheet(name);
-  s.clear();
-  var headers = Object.keys(dataList[0]);
-  s.appendRow(headers);
-  dataList.forEach(function(item) {
-    var row = [];
-    headers.forEach(function(h) { row.push(item[h] || ""); });
-    s.appendRow(row);
-  });
+  if (!s || s.getLastRow() < 2) return;
+  var data = s.getDataRange().getValues();
+  var idCol = data[0].indexOf('id');
+  if (idCol === -1) return;
+  for (var i = data.length - 1; i >= 1; i--) {
+    if (String(data[i][idCol]) === String(id)) { s.deleteRow(i + 1); return; }
+  }
 }
             </div>
           </div>
